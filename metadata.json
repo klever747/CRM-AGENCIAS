@@ -1,0 +1,8 @@
+{
+  "name": "V2 CRM Inmobiliario Multiagencia",
+  "description": "Plataforma comercial corporativa para la gestión de agencias, asesores, leads y cotizaciones de terrenos urbanizados con base de datos SQLite.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
