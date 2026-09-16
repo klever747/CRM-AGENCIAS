@@ -10,8 +10,12 @@ haya visto. Antes de desplegar:
 1. Entra a Supabase → tu proyecto → **Project Settings → Database**.
 2. Resetea la contraseña del usuario `postgres`.
 3. Usa la contraseña nueva en el `DATABASE_URL` del paso 3 más abajo.
-4. Aplica el parche de `server.ts` descrito en `SECURITY_PATCH.md` para
-   quitar la credencial hardcodeada del código.
+4. (Recomendado) Edita `server.ts` en GitHub y quita el fallback
+   hardcodeado de `DATABASE_URL` — ver instrucciones en el chat de Claude
+   donde se generó este despliegue, o aplica manualmente:
+   - Línea con `const PORT = 3000;` → `const PORT = Number(process.env.PORT) || 3000;`
+   - Línea con `const dbUrl = process.env.DATABASE_URL || 'postgresql://...'` →
+     quitar el fallback y lanzar un error si `DATABASE_URL` no está definida.
 
 ## 1. Preparar el VPS
 
@@ -51,7 +55,6 @@ Como mínimo necesitas:
 ```
 DATABASE_URL=postgresql://postgres:TU_PASSWORD_NUEVA@db.jhdvsnpxypszwslhsivg.supabase.co:5432/postgres
 NODE_ENV=production
-PORT=3000
 ```
 
 La base de datos sigue viviendo en Supabase (no se levanta Postgres en el
@@ -59,13 +62,20 @@ VPS), así que el contenedor solo necesita poder salir a internet.
 
 ## 4. Levantar el contenedor
 
-Prueba rápida por IP, sin dominio ni HTTPS:
+Prueba rápida por IP, sin dominio ni HTTPS. La app queda expuesta en el
+puerto **8799** del VPS (mapeado al 3000 interno del contenedor):
 
 ```bash
 docker compose up -d --build
 ```
 
-La app queda disponible en `http://IP_DE_TU_VPS:3000`.
+La app queda disponible en `http://IP_DE_TU_VPS:8799`.
+
+Abre el puerto en el firewall si usas `ufw`:
+
+```bash
+sudo ufw allow 8799
+```
 
 Revisa logs:
 
@@ -86,7 +96,9 @@ Si tienes un dominio apuntando (registro A) a la IP del VPS:
    sudo ufw allow 443
    ```
 
-3. Levanta con el overlay de Caddy (gestiona el certificado SSL solo):
+3. Levanta con el overlay de Caddy (gestiona el certificado SSL solo).
+   Este overlay quita el mapeo directo a 8799 y sirve todo por HTTPS en el
+   puerto 443 en su lugar:
 
    ```bash
    docker compose -f docker-compose.yml -f docker-compose.caddy.yml up -d --build
